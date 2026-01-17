@@ -17,8 +17,7 @@ my_schema = 'default'
 
 
 ## Set path to your volume
-my_volume_path = f"/Volumes/{my_catalog}/{my_schema}/trigger_storage_location/"
-
+my_volume_path = "/Volumes/databricks_simulated_retail_customer_data/v01/source_files/"
 
 ## Display the variables
 print(my_catalog)

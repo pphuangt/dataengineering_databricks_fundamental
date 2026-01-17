@@ -26,52 +26,6 @@
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## REQUIRED - SELECT CLASSIC COMPUTE (The cluster named 'labuser')
-# MAGIC
-# MAGIC Before executing cells in this notebook, please select your classic compute cluster in the lab. Be aware that **Serverless** is enabled by default.
-# MAGIC
-# MAGIC Follow these steps to select the classic compute cluster:
-# MAGIC
-# MAGIC
-# MAGIC 1. Navigate to the top-right of this notebook and click the drop-down menu to select your cluster. By default, the notebook will use **Serverless**.
-# MAGIC
-# MAGIC 2. If your cluster is available, select it and continue to the next cell. If the cluster is not shown:
-# MAGIC
-# MAGIC    - Click **More** in the drop-down.
-# MAGIC
-# MAGIC    - In the **Attach to an existing compute resource** window, use the first drop-down to select your unique cluster.
-# MAGIC
-# MAGIC **NOTE:** If your cluster has terminated, you might need to restart it in order to select it. To do this:
-# MAGIC
-# MAGIC 1. Right-click on **Compute** in the left navigation pane and select *Open in new tab*.
-# MAGIC
-# MAGIC 2. Find the triangle icon to the right of your compute cluster name and click it.
-# MAGIC
-# MAGIC 3. Wait a few minutes for the cluster to start.
-# MAGIC
-# MAGIC 4. Once the cluster is running, complete the steps above to select your cluster.
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## A. Classroom Setup
-# MAGIC
-# MAGIC Run the following cell to configure your working environment for this course. It will also set your default catalog to **dbacademy** and the schema to your specific schema name shown below using the `USE` statements.
-# MAGIC <br></br>
-# MAGIC
-# MAGIC
-# MAGIC ```
-# MAGIC USE CATALOG dbacademy;
-# MAGIC USE SCHEMA dbacademy.<your unique schema name>;
-# MAGIC ```
-# MAGIC
-# MAGIC **NOTE:** The `DA` object is only used in Databricks Academy courses and is not available outside of these courses. It will dynamically reference the information needed to run the course.
-# MAGIC
-# MAGIC **NOTE:** If you use Serverless V1 a warning will be returned. You can ignore the warning.
-
-# COMMAND ----------
-
 # MAGIC %run ./Includes/Classroom-Setup-5L
 
 # COMMAND ----------
@@ -85,30 +39,6 @@
 # MAGIC - ./Task Files/Lesson 2 Files/2.2 - Creating Borrower Details Table
 # MAGIC - ./Task Files/Lesson 2 Files/2.3 - Creating Loan Details Table
 # MAGIC
-
-# COMMAND ----------
-
-job_tasks = [
-        {
-            'task_name': 'ingesting_master_data',
-            'file_path': '/Task Files/Lesson 2 Files/2.1 - Ingesting Banking Data',
-            'depends_on': None
-        },
-        {
-            'task_name': 'creating_borrower_details_table',
-            'file_path': '/Task Files/Lesson 2 Files/2.2 - Creating Borrower Details Table',
-            'depends_on': [{'task_key':'ingesting_master_data'}]
-        },
-        {
-            'task_name': 'creating_loan_details_table',
-            'file_path': '/Task Files/Lesson 2 Files/2.3 - Creating Loan Details Table',
-            'depends_on': [{'task_key':'ingesting_master_data'}]
-        }
-    ]
-
-myjob = DAJobConfig(job_name=f"Lab_05_Bank_Job_{DA.schema_name}",
-                        job_tasks=job_tasks,
-                        job_parameters=[])
 
 # COMMAND ----------
 

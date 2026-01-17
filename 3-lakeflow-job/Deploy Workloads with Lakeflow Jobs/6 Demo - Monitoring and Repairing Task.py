@@ -34,52 +34,6 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## REQUIRED - SELECT CLASSIC COMPUTE (The cluster named 'labuser')
-# MAGIC
-# MAGIC Before executing cells in this notebook, please select your classic compute cluster in the lab. Be aware that **Serverless** is enabled by default.
-# MAGIC
-# MAGIC Follow these steps to select the classic compute cluster:
-# MAGIC
-# MAGIC
-# MAGIC 1. Navigate to the top-right of this notebook and click the drop-down menu to select your cluster. By default, the notebook will use **Serverless**.
-# MAGIC
-# MAGIC 2. If your cluster is available, select it and continue to the next cell. If the cluster is not shown:
-# MAGIC
-# MAGIC    - Click **More** in the drop-down.
-# MAGIC
-# MAGIC    - In the **Attach to an existing compute resource** window, use the first drop-down to select your unique cluster.
-# MAGIC
-# MAGIC **NOTE:** If your cluster has terminated, you might need to restart it in order to select it. To do this:
-# MAGIC
-# MAGIC 1. Right-click on **Compute** in the left navigation pane and select *Open in new tab*.
-# MAGIC
-# MAGIC 2. Find the triangle icon to the right of your compute cluster name and click it.
-# MAGIC
-# MAGIC 3. Wait a few minutes for the cluster to start.
-# MAGIC
-# MAGIC 4. Once the cluster is running, complete the steps above to select your cluster.
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## A. Classroom Setup
-# MAGIC
-# MAGIC Run the following cell to configure your working environment for this course. It will also set your default catalog to **dbacademy** and the schema to your specific schema name shown below using the `USE` statements.
-# MAGIC <br></br>
-# MAGIC ```
-# MAGIC USE CATALOG dbacademy;
-# MAGIC USE SCHEMA dbacademy.<your unique schema name>;
-# MAGIC ```
-# MAGIC
-# MAGIC **NOTE:** The **DA** object is only used in Databricks Academy courses and is not available outside of these courses.
-
-# COMMAND ----------
-
-# MAGIC %run ./Includes/Classroom-Setup-6
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC ## B. Explore Your Schema
 # MAGIC Complete the following to explore your **dbacademy.labuser** schema:
 # MAGIC
@@ -103,17 +57,6 @@
 # MAGIC - We have ingested three tables into our job. Next, we will add tasks (as notebooks) that will clean and transform the tables created by the For Each loop. These notebooks demonstrate how we can apply transformation logic specific to each table.
 # MAGIC
 # MAGIC At the end, we will also add a dashboard, which you can find under Lesson 6 Task Files: [Task Files/Lesson 6 Files]($./Task Files/Lesson 6 Files)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## D. Creating the Starter Job
-# MAGIC
-# MAGIC Next, we will add the above task Notebook to our job. We'll programmatically creating  using the SDK. Simply run the next command to create and configure your job, even if you haven't completed any previous demos. These commands will set up your job with all work completed so far.
-
-# COMMAND ----------
-
-DA.Demo_6_starter_job()
 
 # COMMAND ----------
 
@@ -213,10 +156,6 @@ DA.Demo_6_starter_job()
 # MAGIC 1. Navigate to **Lesson 6 Files**: [Task Files/Lesson 6 Files]($./Task Files/Lesson 6 Files) to locate the input file.
 # MAGIC 2. Locate the **input_file**. This file will assist in generating a user-specific dashboard JSON file.
 # MAGIC 3. Run the command below to automatically create the dashboard from the input file.
-
-# COMMAND ----------
-
-DA.dashboard_creation_from_input()
 
 # COMMAND ----------
 

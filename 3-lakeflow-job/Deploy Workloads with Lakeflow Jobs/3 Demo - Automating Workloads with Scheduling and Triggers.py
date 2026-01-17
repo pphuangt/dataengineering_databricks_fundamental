@@ -30,34 +30,6 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## REQUIRED - SELECT CLASSIC COMPUTE (The cluster named 'labuser')
-# MAGIC
-# MAGIC Before executing cells in this notebook, please select your classic compute cluster in the lab. Be aware that **Serverless** is enabled by default.
-# MAGIC
-# MAGIC Follow these steps to select the classic compute cluster:
-# MAGIC
-# MAGIC
-# MAGIC 1. Navigate to the top-right of this notebook and click the drop-down menu to select your cluster. By default, the notebook will use **Serverless**.
-# MAGIC
-# MAGIC 2. If your cluster is available, select it and continue to the next cell. If the cluster is not shown:
-# MAGIC
-# MAGIC    - Click **More** in the drop-down.
-# MAGIC
-# MAGIC    - In the **Attach to an existing compute resource** window, use the first drop-down to select your unique cluster.
-# MAGIC
-# MAGIC **NOTE:** If your cluster has terminated, you might need to restart it in order to select it. To do this:
-# MAGIC
-# MAGIC 1. Right-click on **Compute** in the left navigation pane and select *Open in new tab*.
-# MAGIC
-# MAGIC 2. Find the triangle icon to the right of your compute cluster name and click it.
-# MAGIC
-# MAGIC 3. Wait a few minutes for the cluster to start.
-# MAGIC
-# MAGIC 4. Once the cluster is running, complete the steps above to select your cluster.
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC ##Classroom Setup
 # MAGIC
 
@@ -105,27 +77,6 @@
 # MAGIC     **NOTE:** The code below creates the required Databricks job for this demonstration using the [Databricks SDK](https://docs.databricks.com/aws/en/dev-tools/sdk-python). The method for creating the job is defined in the [Classroom-Setup-Common]($./Includes/Classroom-Setup-Common) notebook. While the [Databricks SDK](https://databricks-sdk-py.readthedocs.io/en/latest/) is used here, the SDK is beyond the scope of this course. Feel free to explore on your own. -->
 # MAGIC
 # MAGIC ###D1. Creating the starter Job
-
-# COMMAND ----------
-
-## Creates the starter job from the end of '1 Demo - Creating a Job Using Lakeflow Jobs UI'
-
-job_tasks = [
-    {
-        'task_name': 'ingesting_orders',
-        'file_path': '/Task Files/Lesson 1 Files/1.1 - Creating orders table',
-        'depends_on': None
-    },
-    {
-        'task_name': 'ingesting_sales',
-        'file_path': '/Task Files/Lesson 1 Files/1.2 - Creating sales table',
-        'depends_on': None
-    }
-]
- 
-myjob = DAJobConfig(job_name=f"Demo_03_Retail_Job_{DA.schema_name}",
-                        job_tasks=job_tasks,
-                        job_parameters=[])
 
 # COMMAND ----------
 
