@@ -34,42 +34,590 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## REQUIRED - SELECT CLASSIC COMPUTE (your cluster starts with **labuser**)
+# MAGIC ## Setup
 # MAGIC
-# MAGIC Before executing cells in this notebook, please select your classic compute cluster in the lab. Be aware that **Serverless** is enabled by default.
-# MAGIC
-# MAGIC Follow these steps to select the classic compute cluster:
-# MAGIC
-# MAGIC 1. Navigate to the top-right of this notebook and click the drop-down menu to select your cluster. By default, the notebook will use **Serverless**.
-# MAGIC
-# MAGIC 1. If your cluster is available, select it and continue to the next cell. If the cluster is not shown:
-# MAGIC
-# MAGIC     - In the drop-down, select **More**.
-# MAGIC
-# MAGIC     - In the **Attach to an existing compute resource** pop-up, select the first drop-down. You will see a unique cluster name in that drop-down. Please select that cluster.
-# MAGIC
-# MAGIC **NOTE:** If your cluster has terminated, you might need to restart it in order to select it. To do this:
-# MAGIC
-# MAGIC 1. Right-click on **Compute** in the left navigation pane and select *Open in new tab*.
-# MAGIC
-# MAGIC 1. Find the triangle icon to the right of your compute cluster name and click it.
-# MAGIC
-# MAGIC 1. Wait a few minutes for the cluster to start.
-# MAGIC
-# MAGIC 1. Once the cluster is running, complete the steps above to select your cluster.
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## A. Classroom Setup
-# MAGIC
-# MAGIC Run the following cell to configure your working environment for this course.
-# MAGIC
-# MAGIC **NOTE:** The `DA` object is only used in Databricks Academy courses and is not available outside of these courses. It will dynamically create and reference the information needed to run the course.
+import json
+import os
+import json
+from databricks.sdk import WorkspaceClient
+
+
+def create_declarative_pipeline(pipeline_name: str, 
+                        root_path_folder_name: str,
+                        source_folder_names: list = [],
+                        catalog_name: str = 'dbacademy',
+                        schema_name: str = 'default',
+                        serverless: bool = True,
+                        configuration: dict = {},
+                        continuous: bool = False,
+                        photon: bool = True,
+                        channel: str = 'PREVIEW',
+                        development: bool = True,
+                        pipeline_type = 'WORKSPACE'
+                        ):
+  
+    '''
+  Creates the specified DLT pipeline.
+
+  Parameters:
+  ----------
+  pipeline_name : str
+      The name of the DLT pipeline to be created.
+  root_path_folder_name : str
+      The root folder name where the pipeline will be located. This folder must be in the location where this function is called.
+  source_folder_names : list, optional
+      A list of source folder names. Must defined at least one folder within the root folder location above.
+  catalog_name : str, optional
+      The catalog name for the DLT pipeline. Default is 'dbacademy'.
+  schema_name : str, optional
+      The schema name for the DLT pipeline. Default is 'default'.
+  serverless : bool, optional
+      If True, the pipeline will be serverless. Default is True.
+  configuration : dict, optional
+      A dictionary of configuration settings for the pipeline. Default is an empty dictionary.
+  continuous : bool, optional
+      If True, the pipeline will be run in continuous mode. Default is False.
+  photon : bool, optional
+      If True, the pipeline will use Photon for processing. Default is True.
+  channel : str, optional
+      The channel for the pipeline, such as 'PREVIEW'. Default is 'PREVIEW'.
+  development : bool, optional
+      If True, the pipeline will be set up for development. Default is True.
+  pipeline_type : str, optional
+      The type of the pipeline (e.g., 'WORKSPACE'). Default is 'WORKSPACE'.
+
+  Returns:
+  -------
+  None
+      This function does not return anything. It creates the DLT pipeline based on the provided parameters.
+
+  Example:
+  --------
+  create_dlt_pipeline(pipeline_name='my_pipeline_name', 
+                      root_path_folder_name='6 - Putting a DLT Pipeline in Production Project',
+                      source_folder_names=['orders', 'status'])
+  '''
+  
+    w = WorkspaceClient()
+    for pipeline in w.pipelines.list_pipelines():
+        if pipeline.name == pipeline_name:
+            raise ValueError(f"Lakeflow Declarative Pipeline name '{pipeline_name}' already exists. Please delete the pipeline using the UI and rerun the cell to recreate the pipeline.")
+
+    ## Create empty dictionary
+    create_dlt_pipeline_call = {}
+
+    ## Pipeline type
+    create_dlt_pipeline_call['pipeline_type'] = pipeline_type
+
+    ## Modify dictionary for specific DLT configurations
+    create_dlt_pipeline_call['name'] = pipeline_name
+
+    ## Set paths to root and source folders
+    main_course_folder_path = os.getcwd()
+
+    main_path_to_dlt_project_folder = os.path.join('/', main_course_folder_path, root_path_folder_name)
+    create_dlt_pipeline_call['root_path'] = main_path_to_dlt_project_folder
+
+    ## Add path of root folder to source folder names
+    add_path_to_folder_names = [os.path.join(main_path_to_dlt_project_folder, folder_name, '**') for folder_name in source_folder_names]
+    source_folders_path = [{'glob':{'include':folder_name}} for folder_name in add_path_to_folder_names]
+    create_dlt_pipeline_call['libraries'] = source_folders_path
+
+    ## Set default catalog and schema
+    create_dlt_pipeline_call['catalog'] = catalog_name
+    create_dlt_pipeline_call['schema'] = schema_name
+
+    ## Set serverless compute
+    create_dlt_pipeline_call['serverless'] = serverless
+
+    ## Set configuration parameters
+    create_dlt_pipeline_call['configuration'] = configuration
+
+    ## Set if continouous or not
+    create_dlt_pipeline_call['continuous'] = continuous 
+
+    ## Set to use Photon
+    create_dlt_pipeline_call['photon'] = photon
+
+    ## Set DLT channel
+    create_dlt_pipeline_call['channel'] = channel
+
+    ## Set if development mode
+    create_dlt_pipeline_call['development'] = development
+
+    ## Creat DLT pipeline
+
+    print(f"Creating the Lakeflow Declarative Pipeline '{pipeline_name}'...")
+    print(f"Root folder path: {main_path_to_dlt_project_folder}")
+    print(f"Source folder path(s): {source_folders_path}")
+
+    w.api_client.do('POST', '/api/2.0/pipelines', body=create_dlt_pipeline_call)
+    print(f"\nLakeflow Declarative Pipeline Creation '{pipeline_name}' Complete!")
 
 # COMMAND ----------
 
-# MAGIC %run ./Includes/Classroom-Setup-4
+def create_country_lookup_table(in_catalog: str, in_schema: str):
+    # List of country abbreviations and names
+    country_data = [
+        ('AF', 'Afghanistan'),
+        ('AL', 'Albania'),
+        ('DZ', 'Algeria'),
+        ('AS', 'American Samoa'),
+        ('AD', 'Andorra'),
+        ('AO', 'Angola'),
+        ('AI', 'Anguilla'),
+        ('AQ', 'Antarctica'),
+        ('AR', 'Argentina'),
+        ('AM', 'Armenia'),
+        ('AW', 'Aruba'),
+        ('AU', 'Australia'),
+        ('AT', 'Austria'),
+        ('AZ', 'Azerbaijan'),
+        ('BS', 'Bahamas'),
+        ('BH', 'Bahrain'),
+        ('BD', 'Bangladesh'),
+        ('BB', 'Barbados'),
+        ('BY', 'Belarus'),
+        ('BE', 'Belgium'),
+        ('BZ', 'Belize'),
+        ('BJ', 'Benin'),
+        ('BM', 'Bermuda'),
+        ('BT', 'Bhutan'),
+        ('BO', 'Bolivia'),
+        ('BA', 'Bosnia and Herzegovina'),
+        ('BW', 'Botswana'),
+        ('BR', 'Brazil'),
+        ('BN', 'Brunei Darussalam'),
+        ('BG', 'Bulgaria'),
+        ('BF', 'Burkina Faso'),
+        ('BI', 'Burundi'),
+        ('KH', 'Cambodia'),
+        ('CM', 'Cameroon'),
+        ('CA', 'Canada'),
+        ('CV', 'Cape Verde'),
+        ('KY', 'Cayman Islands'),
+        ('CF', 'Central African Republic'),
+        ('TD', 'Chad'),
+        ('CL', 'Chile'),
+        ('CN', 'China'),
+        ('CO', 'Colombia'),
+        ('KM', 'Comoros'),
+        ('CG', 'Congo'),
+        ('CD', 'Democratic Republic of the Congo'),
+        ('CK', 'Cook Islands'),
+        ('CR', 'Costa Rica'),
+        ('CI', 'Côte d\'Ivoire'),
+        ('HR', 'Croatia'),
+        ('CU', 'Cuba'),
+        ('CY', 'Cyprus'),
+        ('CZ', 'Czech Republic'),
+        ('DK', 'Denmark'),
+        ('DJ', 'Djibouti'),
+        ('DM', 'Dominica'),
+        ('DO', 'Dominican Republic'),
+        ('EC', 'Ecuador'),
+        ('EG', 'Egypt'),
+        ('SV', 'El Salvador'),
+        ('GQ', 'Equatorial Guinea'),
+        ('ER', 'Eritrea'),
+        ('EE', 'Estonia'),
+        ('ET', 'Ethiopia'),
+        ('FK', 'Falkland Islands'),
+        ('FO', 'Faroe Islands'),
+        ('FJ', 'Fiji'),
+        ('FI', 'Finland'),
+        ('FR', 'France'),
+        ('GA', 'Gabon'),
+        ('GM', 'Gambia'),
+        ('GE', 'Georgia'),
+        ('DE', 'Germany'),
+        ('GH', 'Ghana'),
+        ('GI', 'Gibraltar'),
+        ('GR', 'Greece'),
+        ('GL', 'Greenland'),
+        ('GD', 'Grenada'),
+        ('GP', 'Guadeloupe'),
+        ('GU', 'Guam'),
+        ('GT', 'Guatemala'),
+        ('GN', 'Guinea'),
+        ('GW', 'Guinea-Bissau'),
+        ('GY', 'Guyana'),
+        ('HT', 'Haiti'),
+        ('HM', 'Heard Island and McDonald Islands'),
+        ('HN', 'Honduras'),
+        ('HK', 'Hong Kong'),
+        ('HU', 'Hungary'),
+        ('IS', 'Iceland'),
+        ('IN', 'India'),
+        ('ID', 'Indonesia'),
+        ('IR', 'Iran'),
+        ('IQ', 'Iraq'),
+        ('IE', 'Ireland'),
+        ('IL', 'Israel'),
+        ('IT', 'Italy'),
+        ('JM', 'Jamaica'),
+        ('JP', 'Japan'),
+        ('JO', 'Jordan'),
+        ('KZ', 'Kazakhstan'),
+        ('KE', 'Kenya'),
+        ('KI', 'Kiribati'),
+        ('KP', 'North Korea'),
+        ('KR', 'South Korea'),
+        ('KW', 'Kuwait'),
+        ('KG', 'Kyrgyzstan'),
+        ('LA', 'Laos'),
+        ('LV', 'Latvia'),
+        ('LB', 'Lebanon'),
+        ('LS', 'Lesotho'),
+        ('LR', 'Liberia'),
+        ('LY', 'Libya'),
+        ('LI', 'Liechtenstein'),
+        ('LT', 'Lithuania'),
+        ('LU', 'Luxembourg'),
+        ('MO', 'Macao'),
+        ('MK', 'North Macedonia'),
+        ('MG', 'Madagascar'),
+        ('MW', 'Malawi'),
+        ('MY', 'Malaysia'),
+        ('MV', 'Maldives'),
+        ('ML', 'Mali'),
+        ('MT', 'Malta'),
+        ('MH', 'Marshall Islands'),
+        ('MQ', 'Martinique'),
+        ('MR', 'Mauritania'),
+        ('MU', 'Mauritius'),
+        ('YT', 'Mayotte'),
+        ('MX', 'Mexico'),
+        ('FM', 'Federated States of Micronesia'),
+        ('MD', 'Moldova'),
+        ('MC', 'Monaco'),
+        ('MN', 'Mongolia'),
+        ('ME', 'Montenegro'),
+        ('MS', 'Montserrat'),
+        ('MA', 'Morocco'),
+        ('MZ', 'Mozambique'),
+        ('MM', 'Myanmar (Burma)'),
+        ('NA', 'Namibia'),
+        ('NR', 'Nauru'),
+        ('NP', 'Nepal'),
+        ('NL', 'Netherlands'),
+        ('NC', 'New Caledonia'),
+        ('NZ', 'New Zealand'),
+        ('NI', 'Nicaragua'),
+        ('NE', 'Niger'),
+        ('NG', 'Nigeria'),
+        ('NU', 'Niue'),
+        ('NF', 'Norfolk Island'),
+        ('MP', 'Northern Mariana Islands'),
+        ('NO', 'Norway'),
+        ('OM', 'Oman'),
+        ('PK', 'Pakistan'),
+        ('PW', 'Palau'),
+        ('PS', 'Palestine'),
+        ('PA', 'Panama'),
+        ('PG', 'Papua New Guinea'),
+        ('PY', 'Paraguay'),
+        ('PE', 'Peru'),
+        ('PH', 'Philippines'),
+        ('PN', 'Pitcairn Islands'),
+        ('PL', 'Poland'),
+        ('PT', 'Portugal'),
+        ('PR', 'Puerto Rico'),
+        ('QA', 'Qatar'),
+        ('RE', 'Réunion'),
+        ('RO', 'Romania'),
+        ('RU', 'Russia'),
+        ('RW', 'Rwanda'),
+        ('SA', 'Saudi Arabia'),
+        ('SN', 'Senegal'),
+        ('RS', 'Serbia'),
+        ('SC', 'Seychelles'),
+        ('SL', 'Sierra Leone'),
+        ('SG', 'Singapore'),
+        ('SX', 'Sint Maarten'),
+        ('SK', 'Slovakia'),
+        ('SI', 'Slovenia'),
+        ('SB', 'Solomon Islands'),
+        ('SO', 'Somalia'),
+        ('ZA', 'South Africa'),
+        ('SS', 'South Sudan'),
+        ('ES', 'Spain'),
+        ('LK', 'Sri Lanka'),
+        ('SD', 'Sudan'),
+        ('SR', 'Suriname'),
+        ('SJ', 'Svalbard and Jan Mayen'),
+        ('SZ', 'Swaziland'),
+        ('SE', 'Sweden'),
+        ('CH', 'Switzerland'),
+        ('SY', 'Syria'),
+        ('TW', 'Taiwan'),
+        ('TJ', 'Tajikistan'),
+        ('TZ', 'Tanzania'),
+        ('TH', 'Thailand'),
+        ('TL', 'Timor-Leste'),
+        ('TG', 'Togo'),
+        ('TK', 'Tokelau'),
+        ('TO', 'Tonga'),
+        ('TT', 'Trinidad and Tobago'),
+        ('TN', 'Tunisia'),
+        ('TR', 'Turkey'),
+        ('TM', 'Turkmenistan'),
+        ('TC', 'Turks and Caicos Islands'),
+        ('TV', 'Tuvalu'),
+        ('UG', 'Uganda'),
+        ('UA', 'Ukraine'),
+        ('AE', 'United Arab Emirates'),
+        ('GB', 'United Kingdom'),
+        ('US', 'United States'),
+        ('UY', 'Uruguay'),
+        ('UZ', 'Uzbekistan'),
+        ('VU', 'Vanuatu'),
+        ('VA', 'Vatican City'),
+        ('VE', 'Venezuela'),
+        ('VN', 'Vietnam'),
+        ('WF', 'Wallis and Futuna'),
+        ('YE', 'Yemen'),
+        ('ZM', 'Zambia'),
+        ('ZW', 'Zimbabwe')
+    ]
+
+    # Convert the list into a Spark DataFrame
+    df_country = spark.createDataFrame(country_data, ['country_abbreviation', 'country_name'])
+
+    # Show the DataFrame
+    df_country.write.mode("overwrite").saveAsTable(f"{in_catalog}.{in_schema}.country_lookup")
+
+# COMMAND ----------
+
+import os  
+import pandas as pd
+from io import StringIO
+
+class LabDataSetup:
+    """
+    Sets up lab data by checking for the existence of a catalog, schema, volume and creating the CSV files in a staging volume.
+
+    - Catalog, schema and volume must already exist.
+
+    Example:
+      obj = LabDataSetup('dbacademy_peter_s','default','lab_staging_files')
+    """
+
+    def __init__(self, catalog_name: str, schema_name: str, volume_name: str):
+        self.catalog_name = catalog_name
+        self.schema_name = schema_name
+        self.volume_name = volume_name
+        self.volume_path = os.path.join('/Volumes', self.catalog_name, self.schema_name, self.volume_name)
+
+        print("Starting environment validation...")
+        self._validate_environment()
+
+        dict_of_files = {
+            'employees_1.csv': self.create_csv_1_data(),
+            'employees_2.csv': self.create_csv_2_data(),
+            'employees_3.csv': self.create_csv_3_data()
+        }
+
+        for filename, filefunc in dict_of_files.items():
+            self.create_csv_file_if_not_exists(file_name=filename, csv_data_func=filefunc)
+
+        print(f"LabDataSetup initialized successfully in volume_path: '{self.volume_path}'")
+
+    def _validate_environment(self):
+        self._validate_catalog()
+        self._validate_schema()
+        self._validate_volume()
+
+    def _validate_catalog(self):
+        catalogs = spark.sql("SHOW CATALOGS").collect()
+        catalog_names = [row.catalog for row in catalogs]
+        if self.catalog_name in catalog_names:
+            print(f"Catalog '{self.catalog_name}' exists.")
+        else:
+            print(f"Catalog '{self.catalog_name}' does not exist.")
+            raise FileNotFoundError(f"{self.catalog_name} catalog not found.")
+
+    def _validate_schema(self):
+        full_schema_name = f"{self.catalog_name}.{self.schema_name}"
+        if spark.catalog.databaseExists(full_schema_name):
+            print(f"Schema '{full_schema_name}' exists.")
+        else:
+            print(f"Schema '{full_schema_name}' does not exist.")
+            raise FileNotFoundError(f"{full_schema_name} schema not found.")
+
+    def _validate_volume(self):
+        volumes = spark.sql(f"SHOW VOLUMES IN {self.catalog_name}.{self.schema_name}").collect()
+        volume_names = [v.volume_name for v in volumes]
+        if self.volume_name in volume_names:
+            print(f"Volume '{self.volume_name}' exists.")
+        else:
+            print(f"Volume '{self.volume_name}' does not exist.")
+            raise FileNotFoundError(f"{self.volume_name} volume not found.")
+
+    def check_if_file_exists(self, file_name: str) -> bool:
+        file_path = os.path.join(self.volume_path, file_name)
+        if os.path.exists(file_path):
+            print(f"The file '{file_path}' exists.")
+            return True
+        else:
+            print(f"The file '{file_path}' does not exist.")
+            return False
+
+    def create_csv_file(self, csv_string: str, file_to_create: str):
+        df = pd.read_csv(StringIO(csv_string))
+        output_path = os.path.join(self.volume_path, file_to_create)
+        df.to_csv(output_path, index=False)
+        print(f"Created CSV file at '{output_path}'.")
+
+    def create_csv_file_if_not_exists(self, file_name: str, csv_data_func: callable):
+        if not self.check_if_file_exists(file_name=file_name):
+            print(f"Creating file '{file_name}'...")
+            self.create_csv_file(csv_string=csv_data_func, file_to_create=file_name)
+        else:
+            print(f"File '{file_name}' already exists. Skipping creation.")
+
+    def create_csv_1_data(self) -> str:
+        return """EmployeeID,FirstName,Country,Department,Salary,HireDate,Operation,ProcessDate
+null,test,test,test,9999,2025-01-01,new,2025-06-05
+1,Sophia,US,Sales,72000,2025-04-01,new,2025-06-05
+2,Nikos,Gr,IT,55000,2025-04-10,new,2025-06-05
+3,Liam,US,Sales,69000,2025-05-03,new,2025-06-05
+4,Elena,GR,IT,53000,2025-06-04,new,2025-06-05
+5,James,Us,IT,60000,2025-06-05,new,2025-06-05"""
+
+    def create_csv_2_data(self) -> str:
+        return """EmployeeID,FirstName,Country,Department,Salary,HireDate,Operation,ProcessDate
+6,Emily,us,Enablement,80000,2025-06-09,new,2025-06-22
+7,Yannis,gR,HR,70000,2025-06-20,new,2025-06-22
+3,Liam,US,Sales,100000,2025-05-03,update,2025-06-22
+1,,,,,,delete,2025-06-22"""
+
+    def create_csv_3_data(self):
+        return """EmployeeID,FirstName,Country,Department,Salary,HireDate,Operation,ProcessDate
+8,Panagiotis,Gr,Enablement,90000,2025-07-01,new,2025-07-22
+6,,,,,,delete,2025-07-22
+2,,,,,,delete,2025-07-22"""
+
+    def copy_file(self, copy_file: str, to_target_volume: str):
+        dbutils.fs.cp(f'{self.volume_path}/{copy_file}', f'{to_target_volume}/{copy_file}')
+        print(f"Moving file '{self.volume_path}/{copy_file}' to '{to_target_volume}/{copy_file}'.")
+
+    def delete_lab_staging_files(self):
+        dbutils.fs.rm(self.volume_path, True)
+        print(f"Deleted all files in '{self.volume_path}'.")
+
+    def __str__(self):
+        return f"LabDataSetup(catalog_name={self.catalog_name}, schema_name={self.schema_name}, volume_name={self.volume_name}, volume_path={self.volume_path})"
+
+# COMMAND ----------
+
+def create_volume(in_catalog: str, in_schema: str, volume_name: str):
+    '''
+    Create a volume in the specified catalog.schema.
+    '''
+    print(f'Creating volume: {in_catalog}.{in_schema}.{volume_name} if not exists.\n')
+    r = spark.sql(f'CREATE VOLUME IF NOT EXISTS {in_catalog}.{in_schema}.{volume_name}')
+# @DBAcademyHelper.add_method
+# def create_catalogs(self, catalog_suffix: list):
+def create_schemas(in_catalog: str, schema_names: list):
+    '''
+    Create schemas for the course in the specified catalog. Use DA.catalog_name in vocareum.
+
+    If the schemas do not exist in the environment it will creates the schemas based the user's schema_name list.
+
+    Parameters:
+    - schema_names (list): A list of strings representing schema names to creates.
+
+    Returns:
+        Log information:
+            - If schemas(s) do not exist, prints information on the schemas it created.
+            - If schemas(s) exist, prints information that schemas exist.
+
+    Example:
+    -------
+    - create_schemas(in_catalog = DA.catalog_name, schema_names = ['1_bronze', '2_silver', '3_gold'])
+    '''
+
+    ## Current schemas in catalog
+    list_of_curr_schemas = spark.sql(f'SHOW SCHEMAS IN {in_catalog}').toPandas().databaseName.to_list()
+
+    # Create schema in catalog if not exists
+    for schema in schema_names:
+        if schema not in list_of_curr_schemas:
+            print(f'Creating schema: {in_catalog}.{schema}.')
+            spark.sql(f'CREATE SCHEMA IF NOT EXISTS {in_catalog}.{schema}')
+        else:
+            print(f'Schema {in_catalog}.{schema} already exists. No action taken.')
+def delete_source_files(source_files: str):
+    """
+    Deletes all files in the specified source volume.
+
+    This function iterates through all the files in the given volume,
+    deletes them, and prints the name of each file being deleted.
+
+    Parameters:
+    - source_files : str
+        The path to the volume containing the files to delete. 
+        Use the {DA.paths.working_dir} to dynamically navigate to the user's volume location in dbacademy/ops/vocareumlab@name:
+            Example: DA.paths.working_dir = /Volumes/dbacademy/ops/vocareumlab@name
+
+    Returns:
+    - None. This function does not return any value. It performs file deletion and prints all files that it deletes. If no files are found it prints in the output.
+
+    Example:
+    - delete_source_files(f'{DA.paths.working_dir}/pii/stream_source/user_reg')
+    """
+
+    import os
+
+    print(f'\nSearching for files in {source_files} volume to delete prior to creating files...')
+    if os.path.exists(source_files):
+        list_of_files = sorted(os.listdir(source_files))
+    else:
+        list_of_files = None
+
+    if not list_of_files:  # Checks if the list is empty.
+        print(f"No files found in {source_files}.\n")
+    else:
+        for file in list_of_files:
+            file_to_delete = source_files + file
+            print(f'Deleting file: {file_to_delete}')
+            dbutils.fs.rm(file_to_delete)
+
+
+# COMMAND ----------
+
+catalog_name = "pipeline"
+schema_name = ['pipeline_data', '1_bronze_db', '2_silver_db', '3_gold_db']
+volume_name = "data"
+data_volume_path = f"/Volumes/{catalog_name}/{schema_name[0]}/{volume_name}"
+working_dir = data_volume_path
+print(working_dir)
+
+## Create volume for the lab
+create_volume(in_catalog=catalog_name, in_schema = 'default', volume_name = 'lab_staging_files')
+create_volume(in_catalog=catalog_name, in_schema = 'default', volume_name = 'lab_files')
+
+## Create schemas for lab data
+create_schemas(in_catalog = catalog_name, schema_names = ['lab_1_bronze_db', 'lab_2_silver_db', 'lab_3_gold_db'])
+
+
+## Create the country_lookup table if it doesn't exist
+if spark.catalog.tableExists(f"{catalog_name}.default.country_lookup") == False:
+    create_country_lookup_table(in_catalog = catalog_name, in_schema = 'default')
+else:
+    print(f'Table {catalog_name}.default.country_lookup already exists. No action taken')
+
+delete_source_files(f'/Volumes/{catalog_name}/default/lab_files/')
+delete_source_files(f'/Volumes/{catalog_name}/default/lab_files_staging/')
+
+# Example usage
+LabSetup = LabDataSetup(f'{catalog_name}','default','lab_staging_files')
+LabSetup.copy_file(copy_file = 'employees_1.csv', 
+                   to_target_volume = f'/Volumes/{catalog_name}/default/lab_files')
 
 # COMMAND ----------
 
@@ -124,7 +672,7 @@
 
 spark.sql(f'''
         SELECT *
-        FROM csv.`/Volumes/{DA.catalog_name}/default/lab_files/`
+        FROM csv.`/Volumes/pipeline/default/lab_files/`
         ''').display()
 
 # COMMAND ----------
@@ -143,7 +691,7 @@ spark.sql(f'''
 # MAGIC
 # MAGIC Explore the code and run the cell. Observe the results. Notice that:
 # MAGIC
-# MAGIC - The CSV file in the volume is read in as a table named **employees_bronze_lab4** in the **labuser.lab_1_bronze_db** schema.  
+# MAGIC - The CSV file in the volume is read in as a table named **employees_bronze_lab4** in the **pipeline.lab_1_bronze_db** schema.  
 # MAGIC - The table contains 6 rows with the correct column names.
 # MAGIC
 # MAGIC Think about what you will need to change when migrating this to a Spake Declarative Pipeline. Hints are added as comments in the code below.
@@ -154,7 +702,7 @@ spark.sql(f'''
 
 # MAGIC %sql
 # MAGIC -- Specify to use your labuser catalog from the course DA object
-# MAGIC USE CATALOG IDENTIFIER(DA.catalog_name);
+# MAGIC USE CATALOG IDENTIFIER(catalog_name);
 # MAGIC
 # MAGIC
 # MAGIC CREATE OR REPLACE TABLE lab_1_bronze_db.employees_bronze_lab4  -- You will have to modify this to create a streaming table in the pipeline
@@ -164,7 +712,7 @@ spark.sql(f'''
 # MAGIC   current_timestamp() AS ingestion_time,
 # MAGIC   _metadata.file_name as raw_file_name
 # MAGIC FROM read_files(                                           -- You will have to modify FROM clause to incrementally read in data
-# MAGIC   '/Volumes/' || DA.catalog_name || '/default/lab_files',  -- You will have to modify this path in the pipeline to your specific raw data source
+# MAGIC   '/Volumes/' || catalog_name || '/default/lab_files',  -- You will have to modify this path in the pipeline to your specific raw data source
 # MAGIC   format => 'CSV',
 # MAGIC   header => 'true'
 # MAGIC );
@@ -286,7 +834,7 @@ spark.sql(f'''
 
 # COMMAND ----------
 
-print(f'/Volumes/{DA.catalog_name}/default/lab_files')
+print(f'/Volumes/{catalog_name}/default/lab_files')
 
 # COMMAND ----------
 
@@ -301,7 +849,7 @@ print(f'/Volumes/{DA.catalog_name}/default/lab_files')
 # MAGIC
 # MAGIC 1. Create a Spark Declarative Pipeline and name it **Lab4 - firstname pipeline project**.
 # MAGIC
-# MAGIC     - Select your **labuser** catalog  
+# MAGIC     - Select your **pipeline** catalog  
 # MAGIC
 # MAGIC     - Select the **default** schema  
 # MAGIC
@@ -322,7 +870,7 @@ print(f'/Volumes/{DA.catalog_name}/default/lab_files')
 # MAGIC     current_timestamp() AS ingestion_time,
 # MAGIC     _metadata.file_name as raw_file_name
 # MAGIC FROM read_files(                                           -- You will have to modify FROM clause to incrementally read in data
-# MAGIC     '/Volumes/' || DA.catalog_name || '/default/lab_files',  -- You will have to modify this path in the pipeline to your specific raw data source
+# MAGIC     '/Volumes/' || catalog_name || '/default/lab_files',  -- You will have to modify this path in the pipeline to your specific raw data source
 # MAGIC     format => 'CSV',
 # MAGIC     header => 'true'
 # MAGIC );
@@ -421,12 +969,12 @@ print(f'/Volumes/{DA.catalog_name}/default/lab_files')
 
 # COMMAND ----------
 
-create_declarative_pipeline(pipeline_name=f'4 - Lab Solution Project - {DA.catalog_name}', 
+create_declarative_pipeline(pipeline_name=f'4 - Lab Solution Project - {catalog_name}', 
                             root_path_folder_name='4 - Lab Solution Project',
-                            catalog_name = DA.catalog_name,
+                            catalog_name = catalog_name,
                             schema_name = 'default',
                             source_folder_names=['solution'],
-                            configuration = {'source':f'/Volumes/{DA.catalog_name}/default/lab_files'})
+                            configuration = {'source':f'/Volumes/{catalog_name}/default/lab_files'})
 
 # COMMAND ----------
 
@@ -533,7 +1081,7 @@ create_declarative_pipeline(pipeline_name=f'4 - Lab Solution Project - {DA.catal
 # COMMAND ----------
 
 LabSetup.copy_file(copy_file = 'employees_2.csv', 
-                   to_target_volume = f'/Volumes/{DA.catalog_name}/default/lab_files')
+                   to_target_volume = f'/Volumes/{catalog_name}/default/lab_files')
 
 # COMMAND ----------
 
@@ -559,7 +1107,7 @@ LabSetup.copy_file(copy_file = 'employees_2.csv',
 # MAGIC %sql
 # MAGIC SELECT *
 # MAGIC FROM read_files(                                           
-# MAGIC   '/Volumes/' || DA.catalog_name || '/default/lab_files/employees_2.csv',  
+# MAGIC   '/Volumes/' || 'pipeline' || '/default/lab_files/employees_2.csv',  
 # MAGIC   format => 'CSV',
 # MAGIC   header => 'true'
 # MAGIC );

@@ -26,54 +26,150 @@
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC ## REQUIRED - SELECT CLASSIC COMPUTE (your cluster starts with **labuser**)
+-- MAGIC ## Setup
 -- MAGIC
--- MAGIC Before executing cells in this notebook, please select your classic compute cluster in the lab. Be aware that **Serverless** is enabled by default.
--- MAGIC
--- MAGIC Follow these steps to select the classic compute cluster:
--- MAGIC
--- MAGIC 1. Navigate to the top-right of this notebook and click the drop-down menu to select your cluster. By default, the notebook will use **Serverless**.
--- MAGIC
--- MAGIC 1. If your cluster is available, select it and continue to the next cell. If the cluster is not shown:
--- MAGIC
--- MAGIC     - In the drop-down, select **More**.
--- MAGIC
--- MAGIC     - In the **Attach to an existing compute resource** pop-up, select the first drop-down. You will see a unique cluster name in that drop-down. Please select that cluster.
--- MAGIC
--- MAGIC **NOTE:** If your cluster has terminated, you might need to restart it in order to select it. To do this:
--- MAGIC
--- MAGIC 1. Right-click on **Compute** in the left navigation pane and select *Open in new tab*.
--- MAGIC
--- MAGIC 1. Find the triangle icon to the right of your compute cluster name and click it.
--- MAGIC
--- MAGIC 1. Wait a few minutes for the cluster to start.
--- MAGIC
--- MAGIC 1. Once the cluster is running, complete the steps above to select your cluster.
 
 -- COMMAND ----------
 
--- MAGIC %md
--- MAGIC ## A. Classroom Setup
+-- DBTITLE 1,Create_declarative_function
+-- MAGIC %python
+-- MAGIC import json
+-- MAGIC import os
+-- MAGIC import json
+-- MAGIC from databricks.sdk import WorkspaceClient
 -- MAGIC
--- MAGIC Run the following cell to configure your working environment for this course.
 -- MAGIC
--- MAGIC This cell will also reset your `/Volumes/dbacademy/ops/labuser/` volume with the JSON files to the starting point, with one JSON file in each volume.
+-- MAGIC def create_declarative_pipeline(pipeline_name: str, 
+-- MAGIC                         root_path_folder_name: str,
+-- MAGIC                         source_folder_names: list = [],
+-- MAGIC                         catalog_name: str = 'dbacademy',
+-- MAGIC                         schema_name: str = 'default',
+-- MAGIC                         serverless: bool = True,
+-- MAGIC                         configuration: dict = {},
+-- MAGIC                         continuous: bool = False,
+-- MAGIC                         photon: bool = True,
+-- MAGIC                         channel: str = 'PREVIEW',
+-- MAGIC                         development: bool = True,
+-- MAGIC                         pipeline_type = 'WORKSPACE'
+-- MAGIC                         ):
+-- MAGIC   
+-- MAGIC     '''
+-- MAGIC   Creates the specified DLT pipeline.
 -- MAGIC
--- MAGIC **NOTE:** The `DA` object is only used in Databricks Academy courses and is not available outside of these courses. It will dynamically create and reference the information needed to run the course.
-
--- COMMAND ----------
-
--- MAGIC %run ./Includes/Classroom-Setup-3
-
--- COMMAND ----------
-
--- MAGIC %md
--- MAGIC Run the cell below to programmatically view the files in your `/Volumes/dbacademy/ops/labuser/orders` volume. Confirm you only see the original **00.json** file in the **orders** folder.
+-- MAGIC   Parameters:
+-- MAGIC   ----------
+-- MAGIC   pipeline_name : str
+-- MAGIC       The name of the DLT pipeline to be created.
+-- MAGIC   root_path_folder_name : str
+-- MAGIC       The root folder name where the pipeline will be located. This folder must be in the location where this function is called.
+-- MAGIC   source_folder_names : list, optional
+-- MAGIC       A list of source folder names. Must defined at least one folder within the root folder location above.
+-- MAGIC   catalog_name : str, optional
+-- MAGIC       The catalog name for the DLT pipeline. Default is 'dbacademy'.
+-- MAGIC   schema_name : str, optional
+-- MAGIC       The schema name for the DLT pipeline. Default is 'default'.
+-- MAGIC   serverless : bool, optional
+-- MAGIC       If True, the pipeline will be serverless. Default is True.
+-- MAGIC   configuration : dict, optional
+-- MAGIC       A dictionary of configuration settings for the pipeline. Default is an empty dictionary.
+-- MAGIC   continuous : bool, optional
+-- MAGIC       If True, the pipeline will be run in continuous mode. Default is False.
+-- MAGIC   photon : bool, optional
+-- MAGIC       If True, the pipeline will use Photon for processing. Default is True.
+-- MAGIC   channel : str, optional
+-- MAGIC       The channel for the pipeline, such as 'PREVIEW'. Default is 'PREVIEW'.
+-- MAGIC   development : bool, optional
+-- MAGIC       If True, the pipeline will be set up for development. Default is True.
+-- MAGIC   pipeline_type : str, optional
+-- MAGIC       The type of the pipeline (e.g., 'WORKSPACE'). Default is 'WORKSPACE'.
+-- MAGIC
+-- MAGIC   Returns:
+-- MAGIC   -------
+-- MAGIC   None
+-- MAGIC       This function does not return anything. It creates the DLT pipeline based on the provided parameters.
+-- MAGIC
+-- MAGIC   Example:
+-- MAGIC   --------
+-- MAGIC   create_dlt_pipeline(pipeline_name='my_pipeline_name', 
+-- MAGIC                       root_path_folder_name='6 - Putting a DLT Pipeline in Production Project',
+-- MAGIC                       source_folder_names=['orders', 'status'])
+-- MAGIC   '''
+-- MAGIC   
+-- MAGIC     w = WorkspaceClient()
+-- MAGIC     for pipeline in w.pipelines.list_pipelines():
+-- MAGIC         if pipeline.name == pipeline_name:
+-- MAGIC             raise ValueError(f"Lakeflow Declarative Pipeline name '{pipeline_name}' already exists. Please delete the pipeline using the UI and rerun the cell to recreate the pipeline.")
+-- MAGIC
+-- MAGIC     ## Create empty dictionary
+-- MAGIC     create_dlt_pipeline_call = {}
+-- MAGIC
+-- MAGIC     ## Pipeline type
+-- MAGIC     create_dlt_pipeline_call['pipeline_type'] = pipeline_type
+-- MAGIC
+-- MAGIC     ## Modify dictionary for specific DLT configurations
+-- MAGIC     create_dlt_pipeline_call['name'] = pipeline_name
+-- MAGIC
+-- MAGIC     ## Set paths to root and source folders
+-- MAGIC     main_course_folder_path = os.getcwd()
+-- MAGIC
+-- MAGIC     main_path_to_dlt_project_folder = os.path.join('/', main_course_folder_path, root_path_folder_name)
+-- MAGIC     create_dlt_pipeline_call['root_path'] = main_path_to_dlt_project_folder
+-- MAGIC
+-- MAGIC     ## Add path of root folder to source folder names
+-- MAGIC     add_path_to_folder_names = [os.path.join(main_path_to_dlt_project_folder, folder_name, '**') for folder_name in source_folder_names]
+-- MAGIC     source_folders_path = [{'glob':{'include':folder_name}} for folder_name in add_path_to_folder_names]
+-- MAGIC     create_dlt_pipeline_call['libraries'] = source_folders_path
+-- MAGIC
+-- MAGIC     ## Set default catalog and schema
+-- MAGIC     create_dlt_pipeline_call['catalog'] = catalog_name
+-- MAGIC     create_dlt_pipeline_call['schema'] = schema_name
+-- MAGIC
+-- MAGIC     ## Set serverless compute
+-- MAGIC     create_dlt_pipeline_call['serverless'] = serverless
+-- MAGIC
+-- MAGIC     ## Set configuration parameters
+-- MAGIC     create_dlt_pipeline_call['configuration'] = configuration
+-- MAGIC
+-- MAGIC     ## Set if continouous or not
+-- MAGIC     create_dlt_pipeline_call['continuous'] = continuous 
+-- MAGIC
+-- MAGIC     ## Set to use Photon
+-- MAGIC     create_dlt_pipeline_call['photon'] = photon
+-- MAGIC
+-- MAGIC     ## Set DLT channel
+-- MAGIC     create_dlt_pipeline_call['channel'] = channel
+-- MAGIC
+-- MAGIC     ## Set if development mode
+-- MAGIC     create_dlt_pipeline_call['development'] = development
+-- MAGIC
+-- MAGIC     ## Creat DLT pipeline
+-- MAGIC
+-- MAGIC     print(f"Creating the Lakeflow Declarative Pipeline '{pipeline_name}'...")
+-- MAGIC     print(f"Root folder path: {main_path_to_dlt_project_folder}")
+-- MAGIC     print(f"Source folder path(s): {source_folders_path}")
+-- MAGIC
+-- MAGIC     w.api_client.do('POST', '/api/2.0/pipelines', body=create_dlt_pipeline_call)
+-- MAGIC     print(f"\nLakeflow Declarative Pipeline Creation '{pipeline_name}' Complete!")
 
 -- COMMAND ----------
 
 -- MAGIC %python
--- MAGIC spark.sql(f'LIST "{DA.paths.working_dir}/orders"').display()
+-- MAGIC catalog_name = "pipeline"
+-- MAGIC schema_name = ['pipeline_data', '1_bronze_db', '2_silver_db', '3_gold_db']
+-- MAGIC volume_name = "data"
+-- MAGIC data_volume_path = f"/Volumes/{catalog_name}/{schema_name[0]}/{volume_name}"
+-- MAGIC working_dir = data_volume_path
+-- MAGIC print(working_dir)
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC Run the cell below to programmatically view the files in your `/Volumes/pipeline/pipeline_data/data/orders` volume. Confirm you only see the original **00.json** file in the **orders** folder.
+
+-- COMMAND ----------
+
+-- MAGIC %python
+-- MAGIC spark.sql(f'LIST "{working_dir}/orders"').display()
 
 -- COMMAND ----------
 
@@ -88,9 +184,9 @@
 -- MAGIC
 -- MAGIC 1. Run the cell below to create your starter pipeline for this demonstration. The pipeline will set the following for you:
 -- MAGIC
--- MAGIC     - Your default catalog: `labuser`
+-- MAGIC     - Your default catalog: `pipeline`
 -- MAGIC
--- MAGIC     - Your configuration parameter: `source` = `/Volumes/dbacademy/ops/your-labuser-name`
+-- MAGIC     - Your configuration parameter: `source` = `/Volumes/pipeline/pipeline_data/data`
 -- MAGIC
 -- MAGIC       **NOTE:** If the pipeline already exists, an error will be returned. In that case, you'll need to delete the existing pipeline and rerun this cell.
 -- MAGIC
@@ -109,12 +205,12 @@
 -- COMMAND ----------
 
 -- MAGIC %python
--- MAGIC create_declarative_pipeline(pipeline_name=f'3 - Adding Data Quality Expectations Project - {DA.catalog_name}', 
+-- MAGIC create_declarative_pipeline(pipeline_name=f'3 - Adding Data Quality Expectations Project - {catalog_name}', 
 -- MAGIC                             root_path_folder_name='3 - Adding Data Quality Expectations Project',
--- MAGIC                             catalog_name = DA.catalog_name,
+-- MAGIC                             catalog_name = catalog_name,
 -- MAGIC                             schema_name = 'default',
 -- MAGIC                             source_folder_names=['orders'],
--- MAGIC                             configuration = {'source':DA.paths.working_dir})
+-- MAGIC                             configuration = {'source':working_dir})
 
 -- COMMAND ----------
 
