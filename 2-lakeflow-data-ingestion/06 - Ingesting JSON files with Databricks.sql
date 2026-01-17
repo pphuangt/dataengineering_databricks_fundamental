@@ -45,7 +45,7 @@ CREATE VOLUME IF NOT EXISTS workspace.default.demo_06_json_raw_data; --create vo
 -- COMMAND ----------
 
 -- DBTITLE 1,checking files
-LIST '/Volumes/workspace/default/demo_06_json_raw_data/06 - events-kafka/'
+LIST '/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/'
 
 
 -- COMMAND ----------
@@ -77,7 +77,7 @@ SELECT current_catalog(), current_schema()
 -- COMMAND ----------
 
 -- DBTITLE 1,List files in volume
-LIST '/Volumes/workspace/default/demo_06_json_raw_data/06 - events-kafka/'
+LIST '/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/'
 
 -- COMMAND ----------
 
@@ -110,7 +110,7 @@ LIST '/Volumes/workspace/default/demo_06_json_raw_data/06 - events-kafka/'
 
 -- DBTITLE 1,View JSON files as text
 SELECT * 
-FROM text.`/Volumes/workspace/default/demo_06_json_raw_data/06 - events-kafka/`
+FROM text.`/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/`
 LIMIT 5;
 
 -- COMMAND ----------
@@ -129,7 +129,7 @@ LIMIT 5;
 -- DBTITLE 1,View JSON file in tabular form
 SELECT *
 FROM read_files(
-  "/Volumes/workspace/default/demo_06_json_raw_data/06 - events-kafka/",
+  "/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/",
   format => "json"
 )
 LIMIT 10;
@@ -165,7 +165,7 @@ DROP TABLE IF EXISTS kafka_events_bronze_raw;
 CREATE TABLE kafka_events_bronze_raw AS
 SELECT *
 FROM read_files(
-  "/Volumes/workspace/default/demo_06_json_raw_data/06 - events-kafka/",
+  "/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/",
   format => "json"
 );
 
