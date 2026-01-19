@@ -31,7 +31,15 @@
 
 -- COMMAND ----------
 
-CREATE VOLUME IF NOT EXISTS workspace.default.demo_07L_json_raw_data; --create volume directory
+-- MAGIC %run ./_resources/00-setup $reset_all_data=false
+
+-- COMMAND ----------
+
+SELECT current_catalog(), current_schema()
+
+-- COMMAND ----------
+
+CREATE VOLUME IF NOT EXISTS demo_07L_json_raw_data; --create volume directory
 
 -- COMMAND ----------
 
@@ -41,7 +49,7 @@ CREATE VOLUME IF NOT EXISTS workspace.default.demo_07L_json_raw_data; --create v
 -- COMMAND ----------
 
 -- DBTITLE 1,checking files
-LIST '/Volumes/workspace/default/demo_07l_json_raw_data/07L-json-data/'
+LIST '/Volumes/main/dbdemos_data_ingestion/demo_07l_json_raw_data/07L-json-data/'
 
 -- COMMAND ----------
 
@@ -59,7 +67,7 @@ LIST '/Volumes/workspace/default/demo_07l_json_raw_data/07L-json-data/'
 -- MAGIC %python
 -- MAGIC spark.sql(f'''
 -- MAGIC           SELECT * 
--- MAGIC           FROM json.`/Volumes/workspace/default/demo_07l_json_raw_data/07L-json-data/lab_kafka_events.json`
+-- MAGIC           FROM json.`/Volumes/main/dbdemos_data_ingestion/demo_07l_json_raw_data/07L-json-data/lab_kafka_events.json`
 -- MAGIC           ''').display()
 
 -- COMMAND ----------
@@ -82,7 +90,7 @@ SELECT
   *,
   cast(unbase64(value) as STRING) as decoded_value
 FROM read_files(
-        '/Volumes/workspace/default/demo_07l_json_raw_data/07L-json-data/lab_kafka_events.json',
+        '/Volumes/main/dbdemos_data_ingestion/demo_07l_json_raw_data/07L-json-data/lab_kafka_events.json',
         format => "json", 
         schema => '''
           key STRING, 

@@ -34,6 +34,10 @@
 
 -- COMMAND ----------
 
+-- MAGIC %run ./_resources/00-setup $reset_all_data=false
+
+-- COMMAND ----------
+
 -- Sample data for MERGE INTO
 DROP TABLE IF EXISTS main_users_target;
 -- Create the target table

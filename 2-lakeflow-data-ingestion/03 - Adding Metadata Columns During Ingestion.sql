@@ -35,7 +35,7 @@
 
 -- COMMAND ----------
 
--- MAGIC %run ./_resources/00-setup $reset_all_data=false
+-- MAGIC %run ./_resources/00-setup $reset_all_data=true
 
 -- COMMAND ----------
 
@@ -254,12 +254,12 @@ ORDER BY source_file;
 -- MAGIC  .write
 -- MAGIC  .format("delta")
 -- MAGIC  .mode("overwrite")
--- MAGIC  .saveAsTable("workspace.default.historical_users_bronze_python_metadata")
+-- MAGIC  .saveAsTable("historical_users_bronze_python_metadata")
 -- MAGIC )
 -- MAGIC
 -- MAGIC
 -- MAGIC # 4. Read and display the table
--- MAGIC historical_users_bronze_python_metadata = spark.table("workspace.default.historical_users_bronze_python_metadata")
+-- MAGIC historical_users_bronze_python_metadata = spark.table("historical_users_bronze_python_metadata")
 -- MAGIC
 -- MAGIC display(historical_users_bronze_python_metadata)
 

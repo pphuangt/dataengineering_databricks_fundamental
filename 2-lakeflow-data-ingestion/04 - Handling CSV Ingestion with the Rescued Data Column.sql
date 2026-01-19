@@ -33,7 +33,7 @@
 
 -- COMMAND ----------
 
--- MAGIC %run ./_resources/00-setup $reset_all_data=false
+-- MAGIC %run ./_resources/00-setup $reset_all_data=true
 
 -- COMMAND ----------
 
@@ -196,7 +196,7 @@ DESCRIBE TABLE EXTENDED sales_bronze;
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC ### B3. (BONUS) Python Equivalent
+-- MAGIC ### B3.Python Equivalent
 
 -- COMMAND ----------
 
@@ -234,7 +234,7 @@ DESCRIBE TABLE EXTENDED sales_bronze;
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC 1. The query below will reference the **malformed_example_1_data.csv** file. This will allow you to view the CSV file as text for inspection.
+-- MAGIC 1. The query below will reference the **user_csv_pipe_delimited.csv** file. This will allow you to view the CSV file as text for inspection.
 -- MAGIC
 -- MAGIC    Run the query and review the results. Notice the following:
 -- MAGIC
@@ -300,6 +300,35 @@ FROM read_files(
             firstname STRING''', 
         rescueddatacolumn => '_rescued_data'    -- Create the _rescued_data column
       );
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC Previously, we captured unparsed or mismatched data in the `_rescued_data` column. Now, we will address these issues by creating a new column to properly parse and store the problematic values.
+
+-- COMMAND ----------
+
+-- DBTITLE 1,example work with _rescued_data
+WITH CTE AS (
+SELECT 
+*
+FROM read_files(
+        '/Volumes/main/dbdemos_data_ingestion/raw_data/user_csv_pipe_delimited',
+        format => "csv",
+        sep => "|",
+        header => true,
+        schema => '''
+            id INT, 
+            creation_date STRING, 
+            firstname STRING''', 
+        rescueddatacolumn => '_rescued_data'
+      )
+)
+SELECT 
+  *,
+  _rescued_data:email AS rescued_email,
+  _rescued_data:age_group AS rescued_age_group
+FROM CTE;
 
 -- COMMAND ----------
 

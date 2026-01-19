@@ -26,6 +26,11 @@
 -- COMMAND ----------
 
 -- MAGIC %md
+-- MAGIC # Set up
+
+-- COMMAND ----------
+
+-- MAGIC %md
 -- MAGIC
 -- MAGIC ## Setup
 -- MAGIC Download **2-lakeflow-data-ingestion/06-json-data**
@@ -33,20 +38,32 @@
 
 -- COMMAND ----------
 
+-- MAGIC %run ./_resources/00-setup $reset_all_data=false
+
+-- COMMAND ----------
+
+SELECT current_catalog(), current_schema()
+
+-- COMMAND ----------
+
 -- DBTITLE 1,create volume
 
-CREATE VOLUME IF NOT EXISTS workspace.default.demo_06_json_raw_data; --create volume directory
+CREATE VOLUME IF NOT EXISTS demo_06_json_raw_data; --create volume directory
 
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC ### upload files **2-lakeflow-data-ingestion/06-json-data** to demo_06_json_raw_data
+-- MAGIC ### upload files 
+-- MAGIC from
+-- MAGIC **2-lakeflow-data-ingestion/06-json-data** 
+-- MAGIC to 
+-- MAGIC /Volumes/main/dbdemos_data_ingestion/demo_06_json_raw_datao_06_json_raw_data
 
 -- COMMAND ----------
 
 -- DBTITLE 1,checking files
-LIST '/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/'
-
+-- you should able to see list JSON files
+LIST '/Volumes/main/dbdemos_data_ingestion/demo_06_json_raw_data/06-json-data'
 
 -- COMMAND ----------
 
@@ -77,7 +94,7 @@ SELECT current_catalog(), current_schema()
 -- COMMAND ----------
 
 -- DBTITLE 1,List files in volume
-LIST '/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/'
+LIST '/Volumes/main/dbdemos_data_ingestion/demo_06_json_raw_data/06-json-data'
 
 -- COMMAND ----------
 
@@ -110,7 +127,7 @@ LIST '/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/'
 
 -- DBTITLE 1,View JSON files as text
 SELECT * 
-FROM text.`/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/`
+FROM text.`/Volumes/main/dbdemos_data_ingestion/demo_06_json_raw_data/06-json-data`
 LIMIT 5;
 
 -- COMMAND ----------
@@ -129,7 +146,7 @@ LIMIT 5;
 -- DBTITLE 1,View JSON file in tabular form
 SELECT *
 FROM read_files(
-  "/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/",
+  "/Volumes/main/dbdemos_data_ingestion/demo_06_json_raw_data/06-json-data",
   format => "json"
 )
 LIMIT 10;
@@ -165,7 +182,7 @@ DROP TABLE IF EXISTS kafka_events_bronze_raw;
 CREATE TABLE kafka_events_bronze_raw AS
 SELECT *
 FROM read_files(
-  "/Volumes/workspace/default/demo_06_json_raw_data/06-json-data/",
+  "/Volumes/main/dbdemos_data_ingestion/demo_06_json_raw_data/06-json-data",
   format => "json"
 );
 

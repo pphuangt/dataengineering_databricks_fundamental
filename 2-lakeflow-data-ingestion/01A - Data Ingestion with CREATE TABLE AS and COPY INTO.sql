@@ -34,7 +34,7 @@
 
 -- COMMAND ----------
 
--- MAGIC %run ./_resources/00-setup $reset_all_data=false
+-- MAGIC %run ./_resources/00-setup $reset_all_data=true
 
 -- COMMAND ----------
 
@@ -214,12 +214,12 @@ DESCRIBE TABLE EXTENDED user_parquet_bronze_ctas_rf;
 -- MAGIC (df
 -- MAGIC  .write
 -- MAGIC  .mode("overwrite")
--- MAGIC  .saveAsTable(f"workspace.default.user_parquet_bronze_ctas_rf")
+-- MAGIC  .saveAsTable(f"user_parquet_bronze_ctas_rf")
 -- MAGIC )
 -- MAGIC
 -- MAGIC
 -- MAGIC ## 3. Read and view the table
--- MAGIC users_bronze_table = spark.table(f"workspace.default.user_parquet_bronze_ctas_rf")
+-- MAGIC users_bronze_table = spark.table(f"user_parquet_bronze_ctas_rf")
 -- MAGIC users_bronze_table.display()
 
 -- COMMAND ----------

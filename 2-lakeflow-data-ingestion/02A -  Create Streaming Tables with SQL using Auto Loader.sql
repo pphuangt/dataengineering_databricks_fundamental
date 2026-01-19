@@ -42,7 +42,7 @@
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC ## REQUIRED - SELECT YOUR SERVERLESS SQL WAREHOUSE
+-- MAGIC ## REQUIRED - SELECT YOUR SERVERLESS SQL WAREHOUSE COMPUTE
 -- MAGIC
 -- MAGIC **NOTE: Creating streaming tables with Databricks SQL requires a SQL warehouse.**.
 -- MAGIC
@@ -70,6 +70,8 @@
 -- COMMAND ----------
 
 -- DBTITLE 1,Check your default catalog and schema
+USE CATALOG main;
+USE SCHEMA dbdemos_data_ingestion;
 SELECT current_catalog(), current_schema()
 
 -- COMMAND ----------
@@ -99,7 +101,7 @@ FROM read_files(
 -- MAGIC %md
 -- MAGIC
 -- MAGIC #### Create a STREAMING TABLE using Databricks SQL
--- MAGIC 3. Your goal is to create an incremental pipeline that only ingests new files (instead of using traditional batch ingestion). You can achieve this by using [streaming tables in Databricks SQL](https://docs.databricks.com/aws/en/dlt/dbsql/streaming) (Auto Loader).
+-- MAGIC Your goal is to create an incremental pipeline that only ingests new files (instead of using traditional batch ingestion). You can achieve this by using [streaming tables in Databricks SQL](https://docs.databricks.com/aws/en/dlt/dbsql/streaming) (Auto Loader).
 -- MAGIC
 -- MAGIC    - The SQL code below creates a streaming table that will be scheduled to incrementally ingest only new data every week. 
 -- MAGIC    
@@ -112,7 +114,7 @@ FROM read_files(
 -- COMMAND ----------
 
 -- DBTITLE 1,Create a streaming table
-
+-- If failed due to resourced exceed .. please try again
 CREATE OR REFRESH STREAMING TABLE sql_csv_autoloader
 SCHEDULE EVERY 1 WEEK     -- Scheduling the refresh is optional
 AS
